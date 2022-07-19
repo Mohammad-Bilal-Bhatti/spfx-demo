@@ -16,7 +16,7 @@ const columns = [
 
 export default class HelloWorld extends React.Component<IHelloWorldProps, IHelloWorldState> {
 
-  private _toolServie: ToolService;
+  private _service: ToolService;
 
   public constructor(props: IHelloWorldProps) {
     super(props);
@@ -34,7 +34,7 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
         index: -1
       },
     };
-    this._toolServie = new ToolService(getSP());
+    this._service = new ToolService(getSP());
   }
   
   public componentDidMount(): void {
@@ -49,16 +49,23 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
   public insertItem(): void {
     console.log('[HelloWorld] insertItem was called');
 
-    const id: number = Math.ceil(Math.random() * 1000);
-
-    const newItem: ITool = {
-      Id: `${id}`,
+    const tool: ITool = {
       Title: 'New Tool',
       Description: 'New Description',
     };
 
-    const data: ITool[] = [...this.state.data, newItem];
-    this.setState({ data });
+    this._service.insert(tool)
+      .then(mtool => { 
+        const data: ITool[] = [...this.state.data, mtool];
+        this.setState({ data });
+      })
+      .catch(error => console.error('error in insertItem: ', error))
+
+  }
+
+  public reload(): void {
+    console.log('[HelloWorld] reload was called');
+    this._fetchData();
   }
 
   public updateItem(): void {
@@ -73,8 +80,12 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
       Description: '[UPDATED] ' + selected.item.Description,
     };
 
-    const data: ITool[] = [...this.state.data.slice(0, selected.index), updatedItem, ...this.state.data.slice(selected.index + 1)]
-    this.setState({ data, selected: { item: undefined, index: -1 } });
+    this._service.update(updatedItem)
+      .then(uitem => {
+        const data: ITool[] = [...this.state.data.slice(0, selected.index), uitem, ...this.state.data.slice(selected.index + 1)]
+        this.setState({ data, selected: { item: undefined, index: -1 } });    
+      })
+      .catch(error => console.error('error in update item: ', error))
   }
 
   public deleteItem(): void {
@@ -83,16 +94,20 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
     const { selected } = this.state;
 
     if (!selected.item) return alert('Please select an item to delete');
-
     console.log(`[deleteItem] removing item on index: ${selected.index}`);
-    const data: ITool[] = [...this.state.data.slice(0, selected.index), ...this.state.data.slice(selected.index + 1)] ;
-    this.setState({ data, selected: { item: undefined, index: -1 } });
+
+    this._service.delete(selected.item)
+      .then(() => {
+        const data: ITool[] = [...this.state.data.slice(0, selected.index), ...this.state.data.slice(selected.index + 1)] ;
+        this.setState({ data, selected: { item: undefined, index: -1 } });    
+      })
+      .catch(error => console.log('error in deleteItem: ', error));
   }
 
   private _fetchData(): void {
     console.log('[HelloWorld] _fetchData was called');
 
-    this._toolServie.getAll()
+    this._service.getAll()
       .then(data => { 
         this.setState({ data: data, loading: false }) 
       })
@@ -119,6 +134,7 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
           <button onClick={() => this.insertItem()} style={{ marginRight: '6px' }}> Insert </button>
           <button onClick={() => this.updateItem()} style={{ marginRight: '6px' }}> Update </button>
           <button onClick={() => this.deleteItem()} style={{ marginRight: '6px' }}> Delete </button>
+          <button onClick={() => this.reload()} style={{ marginRight: '6px' }}> Reload </button>
         </div>
         <Table
           loading={loading}

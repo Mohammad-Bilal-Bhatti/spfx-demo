@@ -1,6 +1,6 @@
 
 export interface ITool {
-  Id: string,
+  Id?: number,
   Title: string,
   Description: string,
 }
