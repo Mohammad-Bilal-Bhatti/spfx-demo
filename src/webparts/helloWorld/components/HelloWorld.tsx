@@ -21,11 +21,18 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
   public constructor(props: IHelloWorldProps) {
     super(props);
     this.onItemSelected = this.onItemSelected.bind(this);
+    this.insertItem = this.insertItem.bind(this);
+    this.updateItem = this.updateItem.bind(this);
+    this.deleteItem = this.deleteItem.bind(this);
+
     this.state = {
       data: [],
       loading: false,
       error: undefined,
-      selectedItem: undefined,
+      selected: {
+        item: undefined,
+        index: -1
+      },
     };
     this._toolServie = new ToolService(getSP());
   }
@@ -34,9 +41,52 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
     this._fetchData();
   }
 
-  public onItemSelected(item: ITool): void {
+  public onItemSelected(item: ITool, index: number): void {
     console.log('[HelloWorld] onItemSelected was called with data: ', item);
-    this.setState({ selectedItem: item })
+    this.setState({ selected: { item, index } });
+  }
+
+  public insertItem(): void {
+    console.log('[HelloWorld] insertItem was called');
+
+    const id: number = Math.ceil(Math.random() * 1000);
+
+    const newItem: ITool = {
+      Id: `${id}`,
+      Title: 'New Tool',
+      Description: 'New Description',
+    };
+
+    const data: ITool[] = [...this.state.data, newItem];
+    this.setState({ data });
+  }
+
+  public updateItem(): void {
+    console.log('[HelloWorld] updateItem was called');
+
+    const { selected } = this.state;
+
+    if (!selected.item) return alert('Please select an item to update')
+
+    const updatedItem: ITool = {
+      ...selected.item,
+      Description: '[UPDATED] ' + selected.item.Description,
+    };
+
+    const data: ITool[] = [...this.state.data.slice(0, selected.index), updatedItem, ...this.state.data.slice(selected.index + 1)]
+    this.setState({ data, selected: { item: undefined, index: -1 } });
+  }
+
+  public deleteItem(): void {
+    console.log('[HelloWorld] deleteItem was called');
+
+    const { selected } = this.state;
+
+    if (!selected.item) return alert('Please select an item to delete');
+
+    console.log(`[deleteItem] removing item on index: ${selected.index}`);
+    const data: ITool[] = [...this.state.data.slice(0, selected.index), ...this.state.data.slice(selected.index + 1)] ;
+    this.setState({ data, selected: { item: undefined, index: -1 } });
   }
 
   private _fetchData(): void {
@@ -61,10 +111,15 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
       userDisplayName
     } = this.props;
 
-    const { data, loading, selectedItem } = this.state;
+    const { data, loading, selected } = this.state;
 
     return (
       <div className="container">
+        <div className="button-group" style={{ marginBottom: '1em' }}>
+          <button onClick={() => this.insertItem()} style={{ marginRight: '6px' }}> Insert </button>
+          <button onClick={() => this.updateItem()} style={{ marginRight: '6px' }}> Update </button>
+          <button onClick={() => this.deleteItem()} style={{ marginRight: '6px' }}> Delete </button>
+        </div>
         <Table
           loading={loading}
           columns={columns}
@@ -72,8 +127,8 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
           onItemSelectedCB={this.onItemSelected}
         />
         { 
-          selectedItem && 
-          <div style={{ marginTop: '1em', color: 'tomato' }}> Selected: {selectedItem.Title} </div> 
+          selected.item && 
+          <div style={{ marginTop: '1em', color: 'tomato' }}> Selected Id: {selected.item.Id} </div> 
         }
       </div>
     );

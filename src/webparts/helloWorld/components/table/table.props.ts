@@ -9,6 +9,6 @@ export interface TableProps {
   columns: Column[],
   data: unknown[],
   loading: boolean,
-  onItemSelectedCB?: (item: unknown) => void,
+  onItemSelectedCB?: (item: unknown, index: number) => void,
   removeItemAt?: (i: number) => void,
 }
