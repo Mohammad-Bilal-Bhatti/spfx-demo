@@ -3,59 +3,53 @@ import styles from './HelloWorld.module.scss';
 import { IHelloWorldProps, IHelloWorldState } from './IHelloWorldInterface';
 import { escape } from '@microsoft/sp-lodash-subset';
 import { Table } from './table/table';
+import ToolService from '../services/lists/tools/Tool.service';
+import { getSP } from '../pnpConfig';
+import { ITool } from '../services/lists/tools/ITool';
+
 
 const columns = [
-  { label: 'Name', accessor: 'name' },
-  { label: 'Surname', accessor: 'surname' },
-  { label: 'District', accessor: 'district' },
-  { label: 'GPA', accessor: 'gpa' },
+  { label: 'Id', accessor: 'Id' },
+  { label: 'Title', accessor: 'Title' },
+  { label: 'Description', accessor: 'Description' },
 ]
-const data = [
-  {
-    name: 'Bilal',
-    surname: 'Bhatti',
-    district: 'Sukkur',
-    gpa: 3.7
-  },
-  {
-    name: 'Rashid',
-    surname: 'Babbar',
-    district: 'Dadu',
-    gpa: 2.9
-  },
-  {
-    name: 'Nandlal',
-    surname: 'Khatri',
-    district: 'Umerkot',
-    gpa: 3.4
-  },
-  {
-    name: 'Tahir',
-    surname: 'Magsi',
-    district: 'Kambar',
-    gpa: 3.2
-  },
-];
 
 export default class HelloWorld extends React.Component<IHelloWorldProps, IHelloWorldState> {
 
+  private _toolServie: ToolService;
+
   public constructor(props: IHelloWorldProps) {
     super(props);
+    this.onItemSelected = this.onItemSelected.bind(this);
     this.state = {
       data: [],
       loading: false,
+      error: undefined,
+      selectedItem: undefined,
     };
+    this._toolServie = new ToolService(getSP());
   }
   
   public componentDidMount(): void {
     this._fetchData();
   }
 
+  public onItemSelected(item: ITool): void {
+    console.log('[HelloWorld] onItemSelected was called with data: ', item);
+    this.setState({ selectedItem: item })
+  }
+
   private _fetchData(): void {
-    this.setState({ loading: true });
-    setTimeout(() => {
-      this.setState({ data: data, loading: false })
-    }, 1000 * 1)
+    console.log('[HelloWorld] _fetchData was called');
+
+    this._toolServie.getAll()
+      .then(data => { 
+        this.setState({ data: data, loading: false }) 
+      })
+      .catch(error => {
+        this.setState({ error: error, loading: false });
+        console.error('error in _fetchData of HelloWorld Component', error)
+      });
   }
 
   public render(): React.ReactElement<IHelloWorldProps> {
@@ -67,7 +61,7 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
       userDisplayName
     } = this.props;
 
-    const { data, loading } = this.state;
+    const { data, loading, selectedItem } = this.state;
 
     return (
       <div className="container">
@@ -75,7 +69,12 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
           loading={loading}
           columns={columns}
           data={data}
+          onItemSelectedCB={this.onItemSelected}
         />
+        { 
+          selectedItem && 
+          <div style={{ marginTop: '1em', color: 'tomato' }}> Selected: {selectedItem.Title} </div> 
+        }
       </div>
     );
   }

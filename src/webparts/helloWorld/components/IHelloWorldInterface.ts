@@ -1,3 +1,5 @@
+import { ITool } from "../services/lists/tools/ITool";
+
 export interface IHelloWorldProps {
   description: string;
   isDarkTheme: boolean;
@@ -8,5 +10,7 @@ export interface IHelloWorldProps {
 
 export interface IHelloWorldState {
   loading: boolean,
-  data: unknown[],
+  data: ITool[],
+  error: Error;
+  selectedItem: ITool;
 }
