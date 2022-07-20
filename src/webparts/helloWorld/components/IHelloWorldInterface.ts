@@ -12,6 +12,7 @@ export interface IHelloWorldState {
   loading: boolean,
   data: ITool[],
   error: Error;
+  hasNext: boolean,
   selected: {
     item: ITool,
     index: number,

@@ -6,6 +6,9 @@ import { Table } from './table/table';
 import ToolService from '../services/lists/tools/Tool.service';
 import { getSP } from '../pnpConfig';
 import { ITool } from '../services/lists/tools/ITool';
+import { PagedItemCollection } from '@pnp/sp/items';
+
+const defaultPageSize = 2;
 
 
 const columns = [
@@ -24,11 +27,14 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
     this.insertItem = this.insertItem.bind(this);
     this.updateItem = this.updateItem.bind(this);
     this.deleteItem = this.deleteItem.bind(this);
+    this.loadNextPageData = this.loadNextPageData.bind(this);
+    // this.handlePageChange = this.handlePageChange.bind(this);
 
     this.state = {
       data: [],
       loading: false,
       error: undefined,
+      hasNext: false,
       selected: {
         item: undefined,
         index: -1
@@ -104,17 +110,45 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
       .catch(error => console.log('error in deleteItem: ', error));
   }
 
+  public loadNextPageData(): void {
+    console.log('loadNextPageDate was called');
+
+    if (this.getNext)
+      this.getNext()
+        .then(data => {
+          this.setState(prevState => ({ hasNext: data.hasNext, data: [ ...prevState.data, ...data.results] }))
+          this.getNext = data.getNext.bind(data);
+        })
+        .catch(error => console.error('error in loadNextPageData: ', error));
+  }
+
+  public getNext(): Promise<PagedItemCollection<ITool[]>> {
+    return Promise.reject('dummy function');
+  }
+
+  // public handlePageChange(selectedPage: number): void {
+  //   console.log('handlePageChange was called with: ', selectedPage);
+  //   this.setState(prevState => ({ page: { ...prevState.page, current: selectedPage } }));
+  // }
+
   private _fetchData(): void {
     console.log('[HelloWorld] _fetchData was called');
 
-    this._service.getAll()
-      .then(data => { 
-        this.setState({ data: data, loading: false }) 
+    this._service.getPaginatedData(defaultPageSize)
+      .then(data => {
+        this.setState({ hasNext: data.hasNext, data: data.results })
+        this.getNext = data.getNext.bind(data);
       })
-      .catch(error => {
-        this.setState({ error: error, loading: false });
-        console.error('error in _fetchData of HelloWorld Component', error)
-      });
+      .catch(error => console.error('error in _fetchData: ', error))
+
+    // this._service.getAll()
+    //   .then(data => { 
+    //     this.setState({ data: data, loading: false }) 
+    //   })
+    //   .catch(error => {
+    //     this.setState({ error: error, loading: false });
+    //     console.error('error in _fetchData of HelloWorld Component', error)
+    //   });
   }
 
   public render(): React.ReactElement<IHelloWorldProps> {
@@ -126,7 +160,7 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
       userDisplayName
     } = this.props;
 
-    const { data, loading, selected } = this.state;
+    const { data, loading, selected, hasNext } = this.state;
 
     return (
       <div className="container">
@@ -141,6 +175,8 @@ export default class HelloWorld extends React.Component<IHelloWorldProps, IHello
           columns={columns}
           data={data}
           onItemSelectedCB={this.onItemSelected}
+          hasNextPage={hasNext}
+          onNextPageCB={this.loadNextPageData}
         />
         { 
           selected.item && 

@@ -2,7 +2,7 @@ import { spfi, SPFI } from "@pnp/sp";
 import "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
-import { IItemAddResult, IItemUpdateResult } from "@pnp/sp/items";
+import { IItemAddResult, PagedItemCollection } from "@pnp/sp/items";
 import { ITool } from "./ITool";
 
 export default class ToolService {
@@ -17,12 +17,14 @@ export default class ToolService {
 
   // eslint-disable-next-line @microsoft/spfx/no-async-await
   public async insert(item: ITool): Promise<ITool> {
+    console.log('[ToolService] insert was called');
     const result: IItemAddResult = await this._sp.web.lists.getByTitle(this._listName).items.add(item);
     return result.data;
   }
 
   // eslint-disable-next-line @microsoft/spfx/no-async-await
   public async delete(item: ITool): Promise<void> {
+    console.log('[ToolService] delete was called');
     return await this._sp.web.lists.getByTitle(this._listName).items.getById(item.Id).delete(); 
   }
 
@@ -44,6 +46,30 @@ export default class ToolService {
     console.log(`[ToolService] getAll was called`);
     const data: ITool[] = await this._sp.web.lists.getByTitle(this._listName).items();
     return data;
+  }
+
+  // eslint-disable-next-line @microsoft/spfx/no-async-await
+  public async getPaginatedData(pageSize: number = 50): Promise<PagedItemCollection<ITool[]>> {
+    console.log('[ToolServie] getPaginatedData was called');
+    const result: PagedItemCollection<ITool[]> = await this._sp.web.lists
+      .getByTitle(this._listName)
+      .items
+      .top(pageSize)
+      .getPaged<ITool[]>();
+
+    return result;
+  }
+
+  // eslint-disable-next-line @microsoft/spfx/no-async-await
+  public async getTopOrderedBy(top: number, orderByColumn: string): Promise<ITool[]> {
+    console.log('[ToolServie] getTopOrderedBy was called');
+    // call this function by (top=5, orderByColumn='Modified')
+    const tools: ITool[] = await this._sp.web.lists
+      .getByTitle(this._listName)
+      .items
+      .top(top)
+      .orderBy(orderByColumn, true)();
+    return tools;
   }
 
   // eslint-disable-next-line @microsoft/spfx/no-async-await

@@ -1,17 +1,18 @@
 import * as React from 'react'
-import { TableProps } from './table.props';
+import { Pagination } from './pagination';
+import { ITableProps } from './table.props';
 
-export class Table extends React.Component<TableProps, {}> {
+export class Table extends React.Component<ITableProps, {}> {
 
   public onItemSelected(item: unknown, index: number): void {
     if (this.props.onItemSelectedCB) this.props.onItemSelectedCB(item, index);
   }
 
-  public render(): React.ReactElement<TableProps> {
-    const { columns, data, loading } = this.props;
+  public render(): React.ReactElement<ITableProps> {
+    const { columns, data, loading, showPagination, currentPage, totalPages, onPageChangeCB, hasNextPage, onNextPageCB } = this.props;
 
     return (
-      <section className="table">
+      <div className="table">
 
         <table>
           <thead>
@@ -36,10 +37,26 @@ export class Table extends React.Component<TableProps, {}> {
                 }
               </tr> )
             }
-          </tbody>
+          </tbody>          
         </table>
+        {
+          hasNextPage &&
+          <button 
+            onClick={() => onNextPageCB()}
+          >
+            Show More
+          </button>
+        }
+        {
+          showPagination && 
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={onPageChangeCB}
+          />
+        }
 
-      </section>
+      </div>
     )
   }
 }
